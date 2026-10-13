@@ -1,79 +1,6 @@
 // src/pages/HomePage.tsx
 import { useNavigate } from 'react-router-dom';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { useRef, useState } from 'react';
-import { SceneBoundary } from '../components/SceneViewport';
-import * as THREE from 'three';
-
-// ── Tiny 3D preview for the hero ──────────────────────────────────────────────
-function FloatingSender() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ref.current) {
-      ref.current.rotation.y = clock.getElapsedTime() * 0.6;
-      ref.current.position.y = Math.sin(clock.getElapsedTime()) * 0.1;
-    }
-  });
-  return (
-    <mesh ref={ref} position={[-1.8, 0, 0]}>
-      <boxGeometry args={[0.8, 0.9, 0.5]} />
-      <meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={0.3} metalness={0.7} roughness={0.2} />
-    </mesh>
-  );
-}
-
-function FloatingReceiver() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ref.current) {
-      ref.current.rotation.y = -clock.getElapsedTime() * 0.6;
-      ref.current.position.y = Math.sin(clock.getElapsedTime() + 1) * 0.1;
-    }
-  });
-  return (
-    <mesh ref={ref} position={[1.8, 0, 0]}>
-      <boxGeometry args={[0.8, 0.9, 0.5]} />
-      <meshStandardMaterial color="#4ade80" emissive="#4ade80" emissiveIntensity={0.3} metalness={0.7} roughness={0.2} />
-    </mesh>
-  );
-}
-
-function FloatingPacket() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ref.current) {
-      const t = (clock.getElapsedTime() % 3) / 3;
-      ref.current.position.x = -1.8 + t * 3.6;
-      ref.current.position.y = 0.5 + Math.sin(clock.getElapsedTime() * 4) * 0.05;
-      ref.current.rotation.y += 0.08;
-    }
-  });
-  return (
-    <mesh ref={ref}>
-      <boxGeometry args={[0.3, 0.14, 0.1]} />
-      <meshStandardMaterial color="#60a5fa" emissive="#60a5fa" emissiveIntensity={0.6} />
-    </mesh>
-  );
-}
-
-function HeroCanvas() {
-  const [still]=useState(()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  return (
-    <Canvas frameloop={still ? 'demand' : 'always'} camera={{ position: [0, 1, 5], fov: 50 }} dpr={Math.min(window.devicePixelRatio, 2)}
-      gl={{ alpha: true, antialias: true }}>
-      <ambientLight intensity={0.4} />
-      <pointLight position={[-3, 2, 2]} color="#22d3ee" intensity={2} />
-      <pointLight position={[3, 2, 2]} color="#4ade80" intensity={2} />
-      <FloatingSender />
-      <FloatingReceiver />
-      <FloatingPacket />
-      <mesh position={[0, -0.6, 0]}>
-        <planeGeometry args={[6, 0.03]} />
-        <meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={0.2} opacity={0.4} transparent />
-      </mesh>
-    </Canvas>
-  );
-}
+import { LiveHero } from '../components/LiveHero';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const SCENARIOS = [
@@ -112,7 +39,7 @@ export default function HomePage() {
         {/* Background grid */}
         <div className="grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.4 }} />
 
-        <div style={{ textAlign: 'center', maxWidth: 760, position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', maxWidth: 1200, width: '100%', position: 'relative', zIndex: 1 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '4px 16px', marginBottom: 24,
@@ -144,32 +71,8 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* 3D preview */}
-          <div style={{
-            height: 200, width: '100%', maxWidth: 500, margin: '0 auto',
-            borderRadius: 16, overflow: 'hidden',
-            border: '1px solid rgba(56,189,248,0.1)',
-            background: 'rgba(13,26,46,0.5)',
-            position: 'relative',
-          }}>
-            <div style={{
-              position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)',
-              fontSize: '0.65rem', color: '#8497ae', zIndex: 10,
-              background: 'rgba(7,13,26,0.8)', padding: '2px 10px', borderRadius: 999,
-            }}>
-              Preview — illustrative only
-            </div>
-            <SceneBoundary fallback={<p style={{padding:70,textAlign:'center'}}>SENDER → DATA → RECEIVER</p>}><HeroCanvas /></SceneBoundary>
-            <div style={{
-              position: 'absolute', bottom: 12, left: 0, right: 0,
-              display: 'flex', justifyContent: 'space-around',
-              fontSize: '0.7rem', fontWeight: 600, padding: '0 24px',
-            }}>
-              <span style={{ color: '#22d3ee' }}>SENDER</span>
-              <span style={{ color: '#60a5fa' }}>DATA 0 ──────────►</span>
-              <span style={{ color: '#4ade80' }}>RECEIVER</span>
-            </div>
-          </div>
+          <LiveHero />
+          <div className="home-lab-cta"><span>Explore beyond the assignment</span><h2>One channel. Three recovery strategies.</h2><p>Compare Stop-and-Wait, Go-Back-N and Selective Repeat with controlled DATA and ACK loss.</p><button className="btn btn-primary" onClick={()=>navigate('/protocol-lab')}>Enter the Protocol Lab →</button></div>
         </div>
       </section>
 

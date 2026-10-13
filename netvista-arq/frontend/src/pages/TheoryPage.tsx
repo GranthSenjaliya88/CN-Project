@@ -1,24 +1,6 @@
 // src/pages/TheoryPage.tsx
 import { useNavigate } from 'react-router-dom';
-
-const TOPICS = [
-  { icon: '🔄', title: 'ARQ — Automatic Repeat reQuest',
-    body: 'ARQ is an error-control method for data transmission. It uses acknowledgements (ACKs) and timeout timers to ensure reliable delivery without requiring a perfect channel. When an error is detected or an ACK does not arrive in time, the sender retransmits the affected data.' },
-  { icon: '⏸️', title: 'Stop-and-Wait Operation',
-    body: 'The simplest ARQ protocol. The sender transmits exactly one data frame and then stops and waits for an ACK before sending the next frame. At most one new logical message is outstanding; retransmitted copies can overlap in flight. This makes the protocol simple to reason about but limits throughput to one frame per round-trip time.' },
-  { icon: '✅', title: 'Acknowledgements (ACKs)',
-    body: 'After the receiver accepts a data frame, it sends an ACK back to the sender. In this implementation, ACK 0 acknowledges DATA 0 and ACK 1 acknowledges DATA 1. The sender must receive the correct ACK before advancing to the next message.' },
-  { icon: '⏰', title: 'Sender Timeout',
-    body: 'When the sender transmits a frame, it starts a countdown timer. If the ACK does not arrive before the timer expires, the sender assumes the frame or ACK was lost (or delayed) and retransmits. The timeout value must be chosen carefully.' },
-  { icon: '🔁', title: 'Retransmission',
-    body: 'A retransmission resends the same outstanding frame with the same sequence number and payload. It is not a new frame — it is a duplicate of the logical message that has not yet been acknowledged. The attempt counter increments.' },
-  { icon: '0️⃣1️⃣', title: 'Alternating Sequence Numbers',
-    body: 'Only two sequence numbers are needed: 0 and 1. They alternate with each successfully delivered new frame. Message 1 uses seq 0, Message 2 uses seq 1, Message 3 uses seq 0 again, etc. A retransmission of Message 1 still uses seq 0.' },
-  { icon: '🚫', title: 'Duplicate Suppression',
-    body: 'When a frame arrives, the receiver checks its sequence number against the expected value. If they match, it is a new frame — accept and deliver. If not, it is a duplicate — acknowledge it (to help the sender stop retransmitting) but do not deliver the payload again.' },
-  { icon: '📐', title: 'ACK Arrival Time Formula',
-    body: 'For this simplified model:\n\nACK arrival = data travel time + receiver ACK delay + ACK return travel time\n\nIf ACK arrival > timeout → retransmission occurs.\nIf ACK arrival ≤ timeout → no retransmission.', formula: true },
-];
+import { ARQLearningGuide } from '../components/ARQLearningGuide';
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -44,39 +26,7 @@ export default function TheoryPage() {
     <main style={{ paddingTop: 80 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px 80px' }}>
 
-        {/* Theory */}
-        <div style={{ marginBottom: 48 }}>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: 8 }}>
-            Protocol <span className="gradient-text">Theory</span>
-          </h1>
-          <p style={{ color: '#94a3b8' }}>Understanding the mechanics behind Stop-and-Wait ARQ.</p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 18, marginBottom: 60 }}>
-          {TOPICS.map(t => (
-            <div key={t.title} className="glass" style={{ padding: 24 }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>{t.icon}</div>
-              <h3 style={{ fontWeight: 700, marginBottom: 10, fontSize: '1rem' }}>{t.title}</h3>
-              {t.formula ? (
-                <>
-                  <div style={{
-                    background: 'rgba(7,13,26,0.8)', borderRadius: 8, padding: '12px 14px',
-                    fontFamily: 'JetBrains Mono', fontSize: '0.8rem', lineHeight: 1.8,
-                    border: '1px solid rgba(34,211,238,0.15)', marginBottom: 10, color: '#22d3ee',
-                    whiteSpace: 'pre-wrap',
-                  }}>
-                    {'ACK arrival = data travel + ACK delay + ACK travel\n\nExample: 100ms + 900ms + 100ms = 1100ms\nTimeout = 600ms → 1100ms > 600ms → RETRANSMIT'}
-                  </div>
-                  <p style={{ color: '#94a3b8', fontSize: '0.84rem', lineHeight: 1.6 }}>
-                    This model omits serialisation time, processing overhead, packet loss, and corruption.
-                  </p>
-                </>
-              ) : (
-                <p style={{ color: '#94a3b8', fontSize: '0.84rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{t.body}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        <ARQLearningGuide />
 
         {/* Assumptions */}
         <div className="glass" style={{ padding: 28, marginBottom: 48 }}>

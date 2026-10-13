@@ -1,10 +1,11 @@
+import { ComputerTower } from './ComputerTower';
 // src/components/NetworkScene.tsx
 // React Three Fiber 3D scene for the ARQ simulation
 
 import { useRef, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Html, OrbitControls, Grid } from '@react-three/drei';
+import { Html, OrbitControls, Grid, RoundedBox, Line, Environment, Lightformer, MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
@@ -14,142 +15,35 @@ function Text({children,position,fontSize=0.2,color}: {children:ReactNode;positi
 }
 import type { InFlightPacket, LiveSenderState, LiveReceiverState } from '../types/simulation';
 
-// ─── Sender workstation ──────────────────────────────────────────────────────
-function SenderMesh({ state, time }: { state: LiveSenderState; time:number }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.PointLight>(null);
-
-  const isTimeout = state.state === 'Retransmitting';
-  const isComplete = state.state === 'Complete';
-
-
-
-  const color = isTimeout ? '#fb923c' : isComplete ? '#4ade80' : '#22d3ee';
-
-  return (
-    <group position={[-4.5, 0, 0]}>
-      {/* Glow light */}
-      <pointLight ref={glowRef} color={color} intensity={1.5} distance={4} />
-
-      {/* Main body */}
-      <mesh ref={meshRef} rotation={[0, Math.sin(time / 3000) * 0.15, 0]} castShadow>
-        <boxGeometry args={[1.5, 1.15, 0.6]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={isTimeout ? 0.6 : 0.3}
-          metalness={0.7}
-          roughness={0.2}
-        />
-      </mesh>
-
-      {/* Screen face */}
-      <mesh position={[0, 0, 0.31]}>
-        <planeGeometry args={[1.25, 0.85]} />
-        <meshStandardMaterial
-          color="#0d1a2e"
-          emissive={color}
-          emissiveIntensity={0.1}
-        />
-      </mesh>
-
-      <mesh position={[0,-0.65,0]}><boxGeometry args={[0.15,0.35,0.15]}/><meshStandardMaterial color="#334155"/></mesh>
-      {/* Base */}
-      <mesh position={[0, -0.85, 0]} receiveShadow>
-        <cylinderGeometry args={[0.4, 0.5, 0.1, 16]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.3} />
-      </mesh>
-
-      {/* Label */}
-      <Text
-        position={[0, 1.65, 0]}
-        fontSize={0.28}
-        color={color}
-        anchorX="center"
-        anchorY="middle"
-        outlineColor="#000"
-        outlineWidth={0.02}
-      >
-        SENDER
-      </Text>
-
-      {/* State label */}
-      <Text
-        position={[0, 1.28, 0]}
-        fontSize={0.16}
-        color="#94a3b8"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {state.state}
-      </Text>
-
-      {/* Sequence label */}
-      {state.sequence !== null && (
-        <Text
-          position={[0, 1.02, 0]}
-          fontSize={0.15}
-          color="#60a5fa"
-          anchorX="center"
-          anchorY="middle"
-        >
-          {`Seq: ${state.sequence} | Msg: ${state.currentMessage}`}
-        </Text>
-      )}
-    </group>
-  );
+// Detailed local geometry: no external models or texture downloads.
+function Workstation({x,label,state,detail,color}:{x:number;label:string;state:string;detail:string;color:string}) {
+ return <group position={[x,0,0]}>
+  <ComputerTower color={color} side={x<0?-1:1}/><RoundedBox args={[4.0,.16,2.3]} radius={.08} position={[0,-.91,.15]} receiveShadow><meshStandardMaterial color="#34465c" roughness={.45} metalness={.35}/></RoundedBox>
+  {[-.95,.95].map(dx=><mesh key={dx} position={[dx,-1.1,.15]}><boxGeometry args={[.12,.4,1.3]}/><meshStandardMaterial color="#182638"/></mesh>)}
+  <RoundedBox args={[1.95,1.25,.16]} radius={.055} position={[0,.18,-.15]} castShadow><meshStandardMaterial color="#596a7f" metalness={.55} roughness={.32}/></RoundedBox>
+  <mesh position={[0,.18,-.059]}><planeGeometry args={[1.78,1.06]}/><meshStandardMaterial color="#071d2d" emissive="#123c57" emissiveIntensity={.7} roughness={.25}/></mesh>
+  <mesh position={[0,-.59,-.16]}><boxGeometry args={[.16,.4,.16]}/><meshStandardMaterial color="#a4b2c3" metalness={.65} roughness={.3}/></mesh>
+  <RoundedBox args={[.75,.055,.45]} radius={.02} position={[0,-.80,-.05]}><meshStandardMaterial color="#73849b" metalness={.55} roughness={.3}/></RoundedBox>
+  <mesh position={[.78,-.36,-.055]}><sphereGeometry args={[.025,12,8]}/><meshBasicMaterial color={color}/></mesh>
+  <mesh position={[0,.74,-.053]}><sphereGeometry args={[.025,12,8]}/><meshStandardMaterial color="#040b12"/></mesh>
+  {/* Screen terminal lines and status indicator */}
+  {[0,1,2,3,4].map(i=><mesh key={i} position={[-.22+(i%2)*.08,.43-i*.13,-.05]}><planeGeometry args={[.94-(i%3)*.18,.027]}/><meshBasicMaterial color={i===0?color:'#395f78'}/></mesh>)}
+  <mesh position={[.58,.26,-.045]}><ringGeometry args={[.15,.18,32]}/><meshBasicMaterial color={color}/></mesh>
+  <RoundedBox args={[1.4,.075,.48]} radius={.025} position={[-.1,-.79,.63]} castShadow><meshStandardMaterial color="#708094" metalness={.25} roughness={.5}/></RoundedBox>
+  {Array.from({length:36},(_,i)=><mesh key={i} position={[-.69+(i%12)*.107,-.742,.49+Math.floor(i/12)*.11]}><boxGeometry args={[.078,.02,.075]}/><meshStandardMaterial color="#192b3f"/></mesh>)}
+  <mesh position={[.96,-.77,.64]} scale={[1,.5,1.6]}><sphereGeometry args={[.12,20,12]}/><meshStandardMaterial color="#92a3b7" roughness={.38}/></mesh>
+  <Line points={[[.96,-.8,.45],[1.08,-.8,.15],[.75,-.8,-.4],[0,-.8,-.4],[0,-.4,-.24]]} color="#172537" lineWidth={2}/>
+  <Text position={[0,1.27,0]} fontSize={.25} color={color}>{label}</Text>
+  <Text position={[0,1.0,0]} fontSize={.16} color="#d5e2ee">{state}</Text>
+  <Text position={[0,-1.45,.5]} fontSize={.14} color="#9bb8d0">{detail}</Text>
+ </group>;
 }
-
-// ─── Receiver workstation ────────────────────────────────────────────────────
-function ReceiverMesh({ state, time }: { state: LiveReceiverState; time:number }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.PointLight>(null);
-
-  const isDuplicate = state.lastOutcome === 'duplicate';
-
-
-
-  const color = isDuplicate ? '#fb923c' : '#4ade80';
-
-  return (
-    <group position={[4.5, 0, 0]}>
-      <pointLight ref={glowRef} color={color} intensity={0.5} distance={4} />
-
-      <mesh ref={meshRef} rotation={[0, Math.sin(time / 3000) * 0.15, 0]} castShadow>
-        <boxGeometry args={[1.5, 1.15, 0.6]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={isDuplicate ? 0.5 : 0.2}
-          metalness={0.7}
-          roughness={0.2}
-        />
-      </mesh>
-
-      <mesh position={[0, 0, 0.31]}>
-        <planeGeometry args={[1.25, 0.85]} />
-        <meshStandardMaterial color="#0d1a2e" emissive={color} emissiveIntensity={0.1} />
-      </mesh>
-
-      <mesh position={[0, -0.85, 0]} receiveShadow>
-        <cylinderGeometry args={[0.4, 0.5, 0.1, 16]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.3} />
-      </mesh>
-
-      <Text position={[0, 1.65, 0]} fontSize={0.28} color={color}
-        anchorX="center" anchorY="middle" outlineColor="#000" outlineWidth={0.02}>
-        RECEIVER
-      </Text>
-      <Text position={[0, 1.28, 0]} fontSize={0.16} color="#94a3b8"
-        anchorX="center" anchorY="middle">
-        {state.state}
-      </Text>
-      <Text position={[0, 1.02, 0]} fontSize={0.15} color="#60a5fa"
-        anchorX="center" anchorY="middle">
-        {`Exp Seq: ${state.expectedSeq} | Delivered: ${state.uniqueDelivered}`}
-      </Text>
-    </group>
-  );
+function SenderMesh({state}:{state:LiveSenderState}) {
+ const color=state.state==='Retransmitting'?'#fb923c':state.state==='Complete'?'#4ade80':'#38bdf8';
+ return <Workstation x={-4.5} label="SENDER" state={state.state} detail={`Message ${state.currentMessage??'—'} · Seq ${state.sequence??'—'} · Attempt ${state.attempt??'—'}`} color={color}/>;
+}
+function ReceiverMesh({state}:{state:LiveReceiverState}) {
+ return <Workstation x={4.5} label="RECEIVER" state={state.state} detail={`Expected seq ${state.expectedSeq} · Delivered ${state.uniqueDelivered}`} color={state.lastOutcome==='duplicate'?'#fb923c':'#4ade80'}/>;
 }
 
 // ─── In-flight packet ────────────────────────────────────────────────────────
@@ -169,23 +63,25 @@ function PacketMesh({
     ));
   }, [currentTimeMs, packet]);
 
-  const color = packet.direction === 'ack'
+  const color = packet.lost ? '#ff4545' : packet.direction === 'ack'
     ? '#4ade80'
     : packet.isRetransmission ? '#fb923c' : '#60a5fa';
 
-  const startX = packet.direction === 'data' ? -3.8 : 3.8;
-  const endX = packet.direction === 'data' ? 3.8 : -3.8;
-  const y = packet.direction === 'data' ? 0.6 : -0.6;
+  const startX = packet.direction === 'data' ? -3.15 : 3.15;
+  const endX = packet.lost ? 0 : packet.direction === 'data' ? 3.15 : -3.15;
+  const y = (packet.direction === 'data' ? 0.6 : -0.6)+(packet.laneZ??0)*.6;
+  const laneZ=packet.laneZ??0;
 
   const x = startX + (endX - startX) * progress;
 
 
 
   return (
-    <group position={[x, y, 0]}>
-      <pointLight color={color} intensity={1.5} distance={1.5} />
-      <mesh ref={meshRef} rotation={[0, currentTimeMs / 180, 0]} castShadow>
-        <boxGeometry args={[0.5, 0.22, 0.18]} />
+    <group position={[x, y, laneZ]}>
+      <Line points={[[-.20,.10,.07],[0,-.015,.07],[.20,.10,.07]]} color="#effaff" lineWidth={2}/>
+      {[1,2,3,4].map(i=><mesh key={i} position={[(packet.direction==='data'?-1:1)*i*.18,0,0]}><sphereGeometry args={[.035,8,8]}/><meshBasicMaterial color={color} transparent opacity={.5-i*.09}/></mesh>)}
+      <mesh ref={meshRef} rotation={[0, 0, 0]} castShadow>
+        <boxGeometry args={[0.48, 0.26, 0.12]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
@@ -205,7 +101,7 @@ function PacketMesh({
       >
         {`${packet.label} · M${packet.msgId}`}
       </Text>
-      <Text position={[0,-0.32,0]} fontSize={0.12} color="#cbd5e1">{`${Math.max(0,packet.arriveTimeMs-currentTimeMs).toFixed(0)} ms to arrival`}</Text>
+      {packet.laneZ===undefined&&<Text position={[0,-0.32,0]} fontSize={0.12} color="#cbd5e1">{`${Math.max(0,packet.arriveTimeMs-currentTimeMs).toFixed(0)} ms to ${packet.lost?'loss':'arrival'}`}</Text>}
     </group>
   );
 }
@@ -214,18 +110,19 @@ function PacketMesh({
 function ChannelLanes() {
   return (
     <>
-      {[-4.5,4.5].map(x=><mesh key={x} position={[x,-1.04,0]} receiveShadow><cylinderGeometry args={[1.2,1.4,.18,48]}/><meshStandardMaterial color="#17324a" metalness={.65} roughness={.35}/></mesh>)}
       {[-2,0,2].map(x=><group key={x}><mesh position={[x,.6,-.1]} rotation={[0,0,-Math.PI/2]}><coneGeometry args={[.12,.3,3]}/><meshStandardMaterial color="#60a5fa" emissive="#60a5fa" emissiveIntensity={.5}/></mesh><mesh position={[x,-.6,-.1]} rotation={[0,0,Math.PI/2]}><coneGeometry args={[.12,.3,3]}/><meshStandardMaterial color="#4ade80" emissive="#4ade80" emissiveIntensity={.5}/></mesh></group>)}
       {/* Upper lane — DATA */}
       <mesh position={[0, 0.6, -0.1]}>
-        <boxGeometry args={[9, 0.04, 0.04]} />
+        <boxGeometry args={[6.3, 0.025, 0.025]} />
         <meshStandardMaterial color="#60a5fa" emissive="#60a5fa" emissiveIntensity={0.4} opacity={0.6} transparent />
       </mesh>
       {/* Lower lane — ACK */}
       <mesh position={[0, -0.6, -0.1]}>
-        <boxGeometry args={[9, 0.04, 0.04]} />
+        <boxGeometry args={[6.3, 0.025, 0.025]} />
         <meshStandardMaterial color="#4ade80" emissive="#4ade80" emissiveIntensity={0.4} opacity={0.6} transparent />
       </mesh>
+      <Line points={[[-6,-.6,-.6],[-6,-1.22,-1.5],[-2,-1.22,-1.7],[2,-1.22,-1.7],[6,-1.22,-1.5],[6,-.6,-.6]]} color="#3f586e" lineWidth={4}/>
+      {[-3.15,3.15].map(x=><group key={x} position={[x,.6,0]}><mesh><boxGeometry args={[.16,.18,.2]}/><meshStandardMaterial color="#38516a" metalness={.6}/></mesh><mesh position={[0,0,.11]}><planeGeometry args={[.10,.08]}/><meshBasicMaterial color="#67e8f9"/></mesh></group>)}
       {/* Lane labels */}
       <Text position={[0, 0.9, 0]} fontSize={0.15} color="#60a5fa" anchorX="center">DATA →</Text>
       <Text position={[0, -0.9, 0]} fontSize={0.15} color="#4ade80" anchorX="center">← ACK</Text>
@@ -254,10 +151,12 @@ export interface NetworkSceneProps {
   isTimeout?: boolean;
   cameraReset?: number;
   reducedMotion?: boolean;
+  cameraMode?: string;
+  failures?: {time:number;direction:string;frame:number}[];
 }
 
 export function NetworkScene({
-  sender, receiver, inFlight, currentTimeMs, isTimeout = false, cameraReset = 0, reducedMotion = false,
+  sender, receiver, inFlight, currentTimeMs, isTimeout = false, cameraReset = 0, reducedMotion = false, cameraMode = "orbit", failures = [],
 }: NetworkSceneProps) {
   return (
     <div style={{ width: '100%', height: '100%', minHeight: 380 }}>
@@ -268,15 +167,16 @@ export function NetworkScene({
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true }}
       >
+        <Environment resolution={128}><Lightformer form="rect" intensity={3} position={[0,6,2]} rotation={[Math.PI/2,0,0]} scale={[15,8,1]}/><Lightformer form="rect" intensity={2} color="#38bdf8" position={[-8,2,0]} rotation={[0,Math.PI/2,0]} scale={[6,5,1]}/></Environment>
         {/* Lighting */}
-        <ambientLight intensity={0.3} />
-        <directionalLight position={[5, 8, 5]} intensity={1} castShadow />
+        <ambientLight intensity={0.85} />
+        <hemisphereLight args={["#dbeafe", "#24344b", 1.5]}/><directionalLight position={[2, 8, 6]} intensity={2.5} castShadow shadow-mapSize={[1024,1024]} shadow-camera-left={-8} shadow-camera-right={8} shadow-camera-top={5} shadow-camera-bottom={-5}/>
         <pointLight position={[-6, 4, 4]} color="#22d3ee" intensity={0.8} />
         <pointLight position={[6, 4, 4]} color="#4ade80" intensity={0.8} />
 
         {/* Grid floor */}
         <Grid
-          position={[0, -1.2, 0]}
+          position={[0, -1.32, 0]}
           args={[20, 20]}
           cellSize={1}
           cellThickness={0.5}
@@ -290,14 +190,15 @@ export function NetworkScene({
         />
 
         {/* Environment fog */}
+        <mesh rotation={[-Math.PI/2,0,0]} position={[0,-1.34,0]} receiveShadow><planeGeometry args={[60,60]}/><MeshReflectorMaterial resolution={256} mirror={.3} mixStrength={.45} color="#111f32" metalness={.4} roughness={.45}/></mesh>
         <fog attach="fog" args={['#070d1a', 12, 30]} />
 
         {/* Protocol objects */}
-        <SenderMesh state={sender} time={reducedMotion?0:currentTimeMs} />
-        <ReceiverMesh state={receiver} time={reducedMotion?0:currentTimeMs} />
+        <SenderMesh state={sender} />
+        <ReceiverMesh state={receiver} />
         <ChannelLanes />
-        <Text position={[-4.5,-1.5,0]} fontSize={0.13} color="#22d3ee">{sender.timerStartMs===null?'Timer idle':`Timeout in ${Math.max(0,sender.timeoutMs-(currentTimeMs-sender.timerStartMs)).toFixed(0)} ms`}</Text>
-        <Text position={[4.5,-1.5,0]} fontSize={0.13} color="#4ade80">{`${receiver.pendingAcks} ACK pending`}</Text>
+        <Text position={[-4.5,-1.78,.5]} fontSize={0.13} color="#22d3ee">{sender.timerStartMs===null?'Timer idle':`Timeout in ${Math.max(0,sender.timeoutMs-(currentTimeMs-sender.timerStartMs)).toFixed(0)} ms`}</Text>
+        <Text position={[4.5,-1.78,.5]} fontSize={0.13} color="#4ade80">{`${receiver.pendingAcks} ACK pending`}</Text>
         <TimeoutRing visible={isTimeout && !reducedMotion} elapsed={currentTimeMs-(sender.timerStartMs??currentTimeMs)} />
 
         {/* In-flight packets */}
@@ -306,19 +207,27 @@ export function NetworkScene({
         ))}
 
         {/* Controls */}
-        <CameraControls reset={cameraReset} />
+        {failures.filter(f=>currentTimeMs>=f.time&&currentTimeMs-f.time<500).map((f,i)=><group key={`${f.time}-${i}`} position={[0,f.direction==='data'?.6:-.6,0]}><mesh rotation={[0,0,Math.PI/4]}><boxGeometry args={[.7,.06,.06]}/><meshBasicMaterial color="#ff4545"/></mesh><mesh rotation={[0,0,-Math.PI/4]}><boxGeometry args={[.7,.06,.06]}/><meshBasicMaterial color="#ff4545"/></mesh><Text position={[0,.45,0]} color="#ff7070">{`${f.direction.toUpperCase()} ${f.frame} LOST`}</Text></group>)}
+        <CameraControls reset={cameraReset} mode={cameraMode} packet={inFlight[0]} time={currentTimeMs} />
       </Canvas>
     </div>
   );
 }
 
-function CameraControls({reset}:{reset:number}) {
+function CameraControls({reset,mode,packet,time}:{reset:number;mode:string;packet?:InFlightPacket;time:number}) {
  const ref=useRef<OrbitControlsImpl>(null);
  const {camera,size,invalidate}=useThree();
  useEffect(()=>{
   const distance=Math.max(8,16/Math.max(size.width/size.height,0.55));
-  camera.position.set(0,3,distance);camera.lookAt(0,0,0);camera.updateProjectionMatrix();
+  camera.position.set(mode==='overview'?4:0,mode==='overview'?7:3.6,distance+2);camera.lookAt(0,0,0);camera.updateProjectionMatrix();
   ref.current?.target.set(0,0,0);ref.current?.update();invalidate();
- },[reset,camera,size.width,size.height,invalidate]);
- return <OrbitControls ref={ref} enablePan={false} minDistance={6} maxDistance={36} minPolarAngle={0.2} maxPolarAngle={Math.PI/2.2} target={[0,0,0]} />;
+ },[reset,mode,camera,size.width,size.height,invalidate]);
+ useEffect(()=>{
+  if(mode!=='follow'||!packet)return;
+  const progress=Math.min(1,Math.max(0,(time-packet.launchTimeMs)/(packet.arriveTimeMs-packet.launchTimeMs)));
+  const start=packet.direction==='data'?-3.15:3.15;const end=packet.lost?0:-start;
+  const x=start+(end-start)*progress;
+  ref.current?.target.set(x,0,packet.laneZ??0);camera.position.set(x+1.5,2.5,6);ref.current?.update();invalidate();
+ },[mode,packet,time,camera,invalidate]);
+ return <OrbitControls ref={ref} enablePan={true} minDistance={6} maxDistance={42} minPolarAngle={0.2} maxPolarAngle={Math.PI/2.2} target={[0,0,0]} />;
 }

@@ -75,3 +75,7 @@ Review and personalise the drafts. Record your own narration and acknowledge AI 
 - Enhanced 3D stations, direction arrows, packet message labels and arrival countdowns; redesigned 2D lanes with sequence labels, timer and pending ACK counts.
 - Added packet inspector beneath playback with sender/receiver columns, message, sequence, attempt, send/arrival timestamps, travel/elapsed duration, playback-aware delivery outcome, DATA/ACK filtering and CSV export.
 - Validation: 128 backend tests and 32 frontend tests passed; production build and lint passed. Browser verified a 600,000 ms ACK delay, initial scheduled rows, first arrival at 100 ms, completion, ACK filter and both scene modes. Existing bundle-size warning remains.
+
+
+## Interactive protocol lab
+The new `/protocol-lab` adds executable Stop-and-Wait, Go-Back-N and Selective Repeat, controlled DATA/ACK loss, sliding-window dashboards and exports. See [model and verification](docs/protocol-lab.md). The original assignment remains under `/simulator`.

@@ -143,6 +143,8 @@ export interface LiveMetrics {
 // ─── In-flight packet (for 3D scene) ─────────────────────────────────────────
 
 export interface InFlightPacket {
+  lost?: boolean;
+  laneZ?: number;
   id: string;
   direction: 'data' | 'ack';
   seq: number;

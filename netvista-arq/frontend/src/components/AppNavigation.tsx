@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 const NAV_LINKS = [
   { path: '/',            label: 'Home' },
   { path: '/simulator',  label: 'Simulator' },
+  { path: '/protocol-lab',label: 'Protocol Lab' },
   { path: '/experiments',label: 'Experiments' },
   { path: '/theory',     label: 'Theory & Exam' },
   { path: '/guide',      label: 'Guide' },
