@@ -1,0 +1,311 @@
+{
+  "animation_hints": [
+    {
+      "anim_type": "packet_launch",
+      "arrive_at": 100,
+      "attempt": 1,
+      "direction": "data",
+      "is_retransmission": false,
+      "msg_id": 1,
+      "packet_label": "DATA 0",
+      "seq": 0,
+      "time_ms": 0
+    },
+    {
+      "anim_type": "payload_delivered",
+      "msg_id": 1,
+      "seq": 0,
+      "time_ms": 100
+    },
+    {
+      "anim_type": "timeout_flash",
+      "msg_id": 1,
+      "seq": 0,
+      "time_ms": 600
+    },
+    {
+      "anim_type": "packet_launch",
+      "arrive_at": 700,
+      "attempt": 2,
+      "direction": "data",
+      "is_retransmission": true,
+      "msg_id": 1,
+      "packet_label": "DATA 0 — RETRY 1",
+      "seq": 0,
+      "time_ms": 600
+    },
+    {
+      "anim_type": "duplicate_flash",
+      "msg_id": 1,
+      "seq": 0,
+      "time_ms": 700
+    },
+    {
+      "anim_type": "packet_launch",
+      "arrive_at": 1100,
+      "direction": "ack",
+      "for_duplicate": false,
+      "msg_id": 1,
+      "packet_label": "ACK 0",
+      "seq": 0,
+      "time_ms": 1000
+    },
+    {
+      "accepted": true,
+      "anim_type": "ack_received",
+      "msg_id": 1,
+      "seq": 0,
+      "time_ms": 1100
+    },
+    {
+      "anim_type": "transfer_complete",
+      "complete_at": 1100,
+      "time_ms": 1100
+    },
+    {
+      "anim_type": "packet_launch",
+      "arrive_at": 1700,
+      "direction": "ack",
+      "for_duplicate": true,
+      "msg_id": 1,
+      "packet_label": "ACK 0",
+      "seq": 0,
+      "time_ms": 1600
+    },
+    {
+      "accepted": false,
+      "anim_type": "ack_received",
+      "msg_id": 1,
+      "seq": 0,
+      "stale": true,
+      "time_ms": 1700
+    }
+  ],
+  "assumptions": [
+    "Deterministic discrete-event model with a priority queue.",
+    "One sender and one receiver; one outstanding new data frame at a time.",
+    "Fixed data and ACK travel times for the duration of each run.",
+    "No packet loss, corruption, or reordering.",
+    "Serialisation and additional processing time are not separately modelled.",
+    "The receiver can receive frames while ACKs are still pending.",
+    "Every received data copy (original or duplicate) schedules an ACK after the configured ACK delay.",
+    "ACK 0 acknowledges DATA 0; ACK 1 acknowledges DATA 1.",
+    "Tie-breaking: when ACK_ARRIVED and TIMEOUT share the same simulation time, ACK_ARRIVED is processed first, cancelling the timeout."
+  ],
+  "config": {
+    "ack_delay_ms": 900,
+    "ack_travel_ms": 100,
+    "data_travel_ms": 100,
+    "num_frames": 1,
+    "timeout_ms": 600
+  },
+  "delivered_messages": [
+    {
+      "message_id": 1,
+      "seq": 0,
+      "time_ms": 100
+    }
+  ],
+  "error": null,
+  "events": [
+    {
+      "actor": "SENDER",
+      "arrive_at": 100,
+      "attempt": 1,
+      "description": "Sender transmitting Message 1 (seq=0, attempt=1)",
+      "event_type": "data_sent",
+      "is_retransmission": false,
+      "message_id": 1,
+      "packet_label": "DATA 0",
+      "sequence": 0,
+      "time_ms": 0
+    },
+    {
+      "accepted": true,
+      "actor": "RECEIVER",
+      "attempt": 1,
+      "description": "Receiver accepted Message 1 (seq=0); payload delivered.",
+      "duplicate": false,
+      "event_type": "data_arrived",
+      "is_retransmission": false,
+      "message_id": 1,
+      "new_expected_seq": 1,
+      "sequence": 0,
+      "time_ms": 100
+    },
+    {
+      "actor": "RECEIVER",
+      "attempt": null,
+      "description": "Payload of Message 1 delivered to application.",
+      "event_type": "payload_delivered",
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 100
+    },
+    {
+      "ack_send_time": 1000,
+      "actor": "RECEIVER",
+      "attempt": null,
+      "description": "ACK 0 scheduled to be sent at 1000 ms.",
+      "event_type": "ack_scheduled",
+      "for_duplicate": false,
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 100
+    },
+    {
+      "actor": "SENDER",
+      "attempt": null,
+      "description": "Timeout! Retransmitting Message 1 (seq=0, attempt 2).",
+      "event_type": "timeout",
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 600,
+      "timeout_ms": 600
+    },
+    {
+      "actor": "SENDER",
+      "arrive_at": 700,
+      "attempt": 2,
+      "description": "Sender retransmitting Message 1 (seq=0, attempt=2)",
+      "event_type": "data_sent",
+      "is_retransmission": true,
+      "message_id": 1,
+      "packet_label": "DATA 0 — RETRY 1",
+      "sequence": 0,
+      "time_ms": 600
+    },
+    {
+      "accepted": false,
+      "actor": "RECEIVER",
+      "attempt": 2,
+      "description": "Receiver received duplicate (seq=0); payload discarded.",
+      "duplicate": true,
+      "event_type": "data_arrived",
+      "is_retransmission": true,
+      "message_id": 1,
+      "new_expected_seq": 1,
+      "sequence": 0,
+      "time_ms": 700
+    },
+    {
+      "actor": "RECEIVER",
+      "attempt": null,
+      "description": "Duplicate Message 1 (seq=0) discarded — not delivered again.",
+      "event_type": "duplicate_discarded",
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 700
+    },
+    {
+      "ack_send_time": 1600,
+      "actor": "RECEIVER",
+      "attempt": null,
+      "description": "ACK 0 (for duplicate) scheduled at 1600 ms.",
+      "event_type": "ack_scheduled",
+      "for_duplicate": true,
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 700
+    },
+    {
+      "actor": "RECEIVER",
+      "arrive_at": 1100,
+      "attempt": null,
+      "description": "Receiver sent ACK 0.",
+      "event_type": "ack_sent",
+      "for_duplicate": false,
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 1000
+    },
+    {
+      "accepted": true,
+      "actor": "SENDER",
+      "attempt": null,
+      "description": "Sender received ACK 0 for Message 1.",
+      "event_type": "ack_arrived",
+      "for_duplicate": false,
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 1100
+    },
+    {
+      "actor": "SENDER",
+      "attempt": null,
+      "description": "ACK 0 accepted; timer cancelled.",
+      "event_type": "ack_accepted",
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 1100
+    },
+    {
+      "actor": "SENDER",
+      "attempt": null,
+      "description": "All messages acknowledged. Transfer complete.",
+      "event_type": "transfer_complete",
+      "is_retransmission": false,
+      "message_id": null,
+      "sequence": null,
+      "time_ms": 1100,
+      "transfer_complete_time_ms": 1100
+    },
+    {
+      "actor": "RECEIVER",
+      "arrive_at": 1700,
+      "attempt": null,
+      "description": "Receiver sent ACK 0 (duplicate ACK).",
+      "event_type": "ack_sent",
+      "for_duplicate": true,
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "time_ms": 1600
+    },
+    {
+      "accepted": false,
+      "actor": "SENDER",
+      "attempt": null,
+      "description": "Sender received stale ACK 0 (transfer already complete); ignored.",
+      "event_type": "ack_arrived",
+      "for_duplicate": true,
+      "is_retransmission": false,
+      "message_id": 1,
+      "sequence": 0,
+      "stale": true,
+      "time_ms": 1700
+    },
+    {
+      "actor": "SENDER",
+      "attempt": null,
+      "description": "ACK 0 ignored (transfer already complete).",
+      "event_type": "ack_ignored",
+      "is_retransmission": false,
+      "message_id": null,
+      "sequence": 0,
+      "time_ms": 1700
+    }
+  ],
+  "metrics": {
+    "acks_accepted": 1,
+    "acks_ignored": 1,
+    "acks_sent": 2,
+    "all_events_finish_ms": 1700,
+    "duplicate_data_arrivals": 1,
+    "retransmissions": 1,
+    "total_data_transmissions": 2,
+    "transfer_complete_time_ms": 1100,
+    "unique_messages_delivered": 1,
+    "unique_messages_requested": 1
+  },
+  "model_version": "1.0",
+  "success": true
+}

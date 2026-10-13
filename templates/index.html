@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stop-and-Wait ARQ Simulator: Understanding Delayed ACKs</title>
+  <meta name="description" content="Interactive Stop-and-Wait ARQ simulator demonstrating how delayed acknowledgements cause retransmissions and how sequence numbers prevent duplicate data delivery." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════ NAVBAR ═══════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#home" class="nav-brand">
+      <span class="brand-icon">⬡</span>
+      <span class="brand-text">ARQ<span class="brand-accent">Sim</span></span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home"        class="nav-link active" data-section="home">Home</a></li>
+      <li><a href="#simulator"   class="nav-link"        data-section="simulator">Simulator</a></li>
+      <li><a href="#experiments" class="nav-link"        data-section="experiments">Experiments</a></li>
+      <li><a href="#theory"      class="nav-link"        data-section="theory">Theory</a></li>
+      <li><a href="#exam"        class="nav-link"        data-section="exam">Exam Q&amp;A</a></li>
+      <li><a href="#guide"       class="nav-link"        data-section="guide">Guide</a></li>
+    </ul>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Open navigation">☰</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<section id="home" class="section hero-section">
+
+  <!-- 3D animated background particles -->
+  <div class="hero-bg">
+    <canvas id="heroCanvas"></canvas>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge">Computer Networks · Stop-and-Wait ARQ</div>
+    <h1 class="hero-title">
+      Stop-and-Wait ARQ<br/>
+      <span class="gradient-text">with Delayed ACK</span>
+    </h1>
+    <p class="hero-subtitle">
+      See how ACK delays and sender timeouts cause retransmissions, and how
+      sequence numbers prevent duplicate data delivery.
+    </p>
+    <div class="hero-cta">
+      <a href="#simulator" class="btn btn-primary" id="btnOpenSim">
+        <span>Open Simulator</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="5 12 19 12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a href="#theory" class="btn btn-secondary">
+        <span>Learn the Protocol</span>
+      </a>
+    </div>
+
+    <!-- Mini animation preview -->
+    <div class="hero-preview">
+      <div class="preview-node sender-node">
+        <div class="node-3d">
+          <div class="node-face node-front">SENDER</div>
+          <div class="node-face node-back">SENDER</div>
+          <div class="node-face node-left"></div>
+          <div class="node-face node-right"></div>
+          <div class="node-face node-top"></div>
+          <div class="node-face node-bottom"></div>
+        </div>
+        <div class="node-label">Seq: 0 | Waiting...</div>
+      </div>
+      <div class="preview-channel">
+        <div class="channel-lane upper-lane">
+          <div class="mini-packet data-packet" id="miniDataPkt">DATA 0</div>
+          <span class="lane-arrow">→</span>
+        </div>
+        <div class="channel-lane lower-lane">
+          <div class="mini-packet ack-packet" id="miniAckPkt">ACK 0</div>
+          <span class="lane-arrow lane-arrow-rev">←</span>
+        </div>
+      </div>
+      <div class="preview-node receiver-node">
+        <div class="node-3d">
+          <div class="node-face node-front">RECEIVER</div>
+          <div class="node-face node-back">RECEIVER</div>
+          <div class="node-face node-left"></div>
+          <div class="node-face node-right"></div>
+          <div class="node-face node-top"></div>
+          <div class="node-face node-bottom"></div>
+        </div>
+        <div class="node-label">Expecting seq: 0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Concept cards -->
+  <div class="concept-cards">
+    <div class="concept-card" data-delay="0">
+      <div class="concept-icon">📤</div>
+      <h3>Send &amp; Wait</h3>
+      <p>The sender transmits one frame and waits for an ACK before sending the next.</p>
+    </div>
+    <div class="concept-card" data-delay="150">
+      <div class="concept-icon">⏱️</div>
+      <h3>Timeout &amp; Retry</h3>
+      <p>If the ACK doesn't arrive within the timeout window, the sender retransmits.</p>
+    </div>
+    <div class="concept-card" data-delay="300">
+      <div class="concept-icon">🔍</div>
+      <h3>Detect Duplicates</h3>
+      <p>Sequence numbers let the receiver recognise and discard duplicate frames.</p>
+    </div>
+  </div>
+
+  <!-- Scenario shortcuts -->
+  <div class="scenario-shortcuts">
+    <p class="shortcuts-label">Jump to a demonstration scenario:</p>
+    <div class="shortcuts-row">
+      <button class="shortcut-btn" id="shortNormal"    onclick="loadScenario('normal')">🟢 Normal Delivery</button>
+      <button class="shortcut-btn" id="shortDelayed"   onclick="loadScenario('delayed')">🟠 Delayed ACK</button>
+      <button class="shortcut-btn" id="shortAdjusted"  onclick="loadScenario('adjusted')">🔵 Adjusted Timeout</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SIMULATOR ═══════════════════════════════ -->
+<section id="simulator" class="section sim-section">
+  <div class="section-header">
+    <h2 class="section-title">Interactive ARQ Simulator</h2>
+    <p class="section-subtitle">Configure the network, run the simulation, and watch packets travel in real time.</p>
+  </div>
+
+  <div class="sim-layout">
+
+    <!-- ── CONFIG PANEL ── -->
+    <aside class="config-panel glass-panel">
+      <h3 class="panel-title">⚙️ Configuration</h3>
+
+      <div class="config-group">
+        <label for="cfgFrames">Number of Frames</label>
+        <div class="input-row">
+          <input type="number" id="cfgFrames" min="1" max="20" value="4" />
+          <span class="unit">frames</span>
+        </div>
+      </div>
+
+      <div class="config-group">
+        <label for="cfgDataTravel">Data Travel Time</label>
+        <div class="input-row">
+          <input type="number" id="cfgDataTravel" min="1" max="5000" value="100" />
+          <span class="unit">ms</span>
+        </div>
+        <span class="config-hint">Time for a data frame to reach the receiver.</span>
+      </div>
+
+      <div class="config-group highlight-group">
+        <label for="cfgAckDelay">Receiver ACK Delay <span class="badge-key">KEY</span></label>
+        <div class="input-row">
+          <input type="number" id="cfgAckDelay" min="0" max="10000" value="100" />
+          <span class="unit">ms</span>
+        </div>
+        <span class="config-hint">Waiting time before receiver sends an ACK. <em>Does not</em> include travel time.</span>
+      </div>
+
+      <div class="config-group">
+        <label for="cfgAckTravel">ACK Travel Time</label>
+        <div class="input-row">
+          <input type="number" id="cfgAckTravel" min="1" max="5000" value="100" />
+          <span class="unit">ms</span>
+        </div>
+      </div>
+
+      <div class="config-group highlight-group">
+        <label for="cfgTimeout">Sender Timeout <span class="badge-key">KEY</span></label>
+        <div class="input-row">
+          <input type="number" id="cfgTimeout" min="1" max="20000" value="800" />
+          <span class="unit">ms</span>
+        </div>
+        <span class="config-hint">Time sender waits before retransmitting.</span>
+      </div>
+
+      <div class="config-divider"></div>
+
+      <div class="config-group">
+        <label for="cfgSpeed">Playback Speed</label>
+        <div class="speed-buttons">
+          <button class="speed-btn" data-speed="0.5">0.5×</button>
+          <button class="speed-btn active" data-speed="1">1×</button>
+          <button class="speed-btn" data-speed="2">2×</button>
+          <button class="speed-btn" data-speed="4">4×</button>
+        </div>
+      </div>
+
+      <div class="config-divider"></div>
+
+      <div class="scenario-select">
+        <label>Quick Scenario</label>
+        <select id="scenarioSelect" onchange="applyScenarioFromSelect()">
+          <option value="">— Custom —</option>
+          <option value="normal">Normal Delivery</option>
+          <option value="delayed">Delayed ACK</option>
+          <option value="adjusted">Adjusted Timeout</option>
+        </select>
+      </div>
+
+      <div class="control-buttons">
+        <button class="btn btn-run"   id="btnRun"   onclick="runSimulation()">▶ Run</button>
+        <button class="btn btn-reset" id="btnReset" onclick="resetSimulation()">↺ Reset</button>
+      </div>
+
+      <div id="configError" class="config-error hidden"></div>
+    </aside>
+
+    <!-- ── MAIN CANVAS + STATES ── -->
+    <div class="sim-main">
+
+      <!-- Animation canvas -->
+      <div class="sim-canvas glass-panel" id="simCanvas">
+        <div class="canvas-header">
+          <span id="simStatusText" class="sim-status-text">Configure settings and click Run</span>
+          <span id="simTimeDisplay" class="sim-time">Time: 0 ms</span>
+        </div>
+
+        <div class="network-stage" id="networkStage">
+          <!-- Sender node (3D) -->
+          <div class="network-node sender-3d" id="senderNode">
+            <div class="node-cube">
+              <div class="cube-face cube-front">
+                <div class="node-inner-label">SENDER</div>
+                <div class="node-seq" id="senderSeq">Seq: 0</div>
+              </div>
+              <div class="cube-face cube-back"></div>
+              <div class="cube-face cube-left"></div>
+              <div class="cube-face cube-right"></div>
+              <div class="cube-face cube-top"></div>
+              <div class="cube-face cube-bottom"></div>
+            </div>
+            <div class="node-status-box sender-status">
+              <div class="status-line"><span class="sl-label">State:</span><span class="sl-val" id="senderState">Ready</span></div>
+              <div class="status-line"><span class="sl-label">Message:</span><span class="sl-val" id="senderMsg">—</span></div>
+              <div class="status-line"><span class="sl-label">Attempt:</span><span class="sl-val" id="senderAttempt">—</span></div>
+              <div class="status-line"><span class="sl-label">Timeout:</span><span class="sl-val" id="senderTimeout">—</span></div>
+              <div class="timer-bar-wrap">
+                <div class="timer-bar" id="timerBar"></div>
+              </div>
+              <div class="status-line"><span class="sl-label">Remaining:</span><span class="sl-val" id="timerRemain">—</span></div>
+            </div>
+          </div>
+
+          <!-- Channel with packet lanes -->
+          <div class="channel-area" id="channelArea">
+            <div class="packet-lane upper-packet-lane" id="upperLane">
+              <span class="lane-tag">DATA →</span>
+            </div>
+            <div class="channel-divider"></div>
+            <div class="packet-lane lower-packet-lane" id="lowerLane">
+              <span class="lane-tag">← ACK</span>
+            </div>
+          </div>
+
+          <!-- Receiver node (3D) -->
+          <div class="network-node receiver-3d" id="receiverNode">
+            <div class="node-cube receiver-cube">
+              <div class="cube-face cube-front">
+                <div class="node-inner-label">RECEIVER</div>
+                <div class="node-seq" id="receiverSeq">Exp: 0</div>
+              </div>
+              <div class="cube-face cube-back"></div>
+              <div class="cube-face cube-left"></div>
+              <div class="cube-face cube-right"></div>
+              <div class="cube-face cube-top"></div>
+              <div class="cube-face cube-bottom"></div>
+            </div>
+            <div class="node-status-box receiver-status">
+              <div class="status-line"><span class="sl-label">State:</span><span class="sl-val" id="receiverState">Ready</span></div>
+              <div class="status-line"><span class="sl-label">Exp Seq:</span><span class="sl-val" id="receiverExpSeq">0</span></div>
+              <div class="status-line"><span class="sl-label">Last Frame:</span><span class="sl-val" id="receiverLastFrame">—</span></div>
+              <div class="status-line"><span class="sl-label">ACK Status:</span><span class="sl-val" id="receiverAckStatus">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivered data box -->
+        <div class="delivered-box glass-panel" id="deliveredBox">
+          <h4 class="delivered-title">📦 Data Delivered to Application</h4>
+          <div class="delivered-list" id="deliveredList">
+            <span class="empty-hint">No data delivered yet.</span>
+          </div>
+          <div class="delivered-dups" id="deliveredDups"></div>
+        </div>
+      </div>
+
+      <!-- Playback controls -->
+      <div class="playback-bar glass-panel" id="playbackBar">
+        <div class="pb-left">
+          <button class="pb-btn" id="btnPause"     onclick="togglePause()">⏸ Pause</button>
+          <button class="pb-btn" id="btnNextEvent" onclick="stepNextEvent()">⏭ Next Event</button>
+        </div>
+        <div class="pb-center">
+          <div class="progress-wrap">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+        <div class="pb-right">
+          <span class="pb-label" id="simTimeLive">0 ms</span>
+        </div>
+      </div>
+
+      <!-- Metrics row -->
+      <div class="metrics-row" id="metricsRow">
+        <div class="metric-card">
+          <span class="metric-val" id="mTransmissions">0</span>
+          <span class="metric-label">Transmissions</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-val retx-val" id="mRetransmissions">0</span>
+          <span class="metric-label">Retransmissions</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-val" id="mDuplicates">0</span>
+          <span class="metric-label">Duplicates</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-val green-val" id="mDelivered">0</span>
+          <span class="metric-label">Delivered</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-val" id="mAcksSent">0</span>
+          <span class="metric-label">ACKs Sent</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-val" id="mComplete">—</span>
+          <span class="metric-label">Completion</span>
+        </div>
+      </div>
+
+      <!-- Event log -->
+      <div class="event-log glass-panel" id="eventLog">
+        <div class="log-header">
+          <h3 class="log-title">📋 Event Log</h3>
+          <div class="log-controls">
+            <select id="logFilter" onchange="filterLog()">
+              <option value="all">All Events</option>
+              <option value="SENDER">Sender Only</option>
+              <option value="RECEIVER">Receiver Only</option>
+            </select>
+            <button class="btn btn-sm" onclick="downloadLogCSV()">⬇ CSV</button>
+            <button class="btn btn-sm" onclick="downloadJSON()">⬇ JSON</button>
+          </div>
+        </div>
+        <div class="log-body" id="logBody">
+          <span class="empty-hint">Run the simulation to see events.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ EXPERIMENTS ═══════════════════════════════ -->
+<section id="experiments" class="section experiments-section">
+  <div class="section-header">
+    <h2 class="section-title">Experiments &amp; Comparison</h2>
+    <p class="section-subtitle">Run the three standard scenarios and compare the results side by side.</p>
+  </div>
+
+  <div class="preset-buttons">
+    <button class="preset-btn preset-normal"    onclick="runPreset('normal')">
+      <span class="preset-icon">🟢</span>
+      <span class="preset-name">Normal Delivery</span>
+      <span class="preset-desc">ACK delay 100 ms · Timeout 800 ms</span>
+    </button>
+    <button class="preset-btn preset-delayed"   onclick="runPreset('delayed')">
+      <span class="preset-icon">🟠</span>
+      <span class="preset-name">Delayed ACK</span>
+      <span class="preset-desc">ACK delay 900 ms · Timeout 600 ms</span>
+    </button>
+    <button class="preset-btn preset-adjusted"  onclick="runPreset('adjusted')">
+      <span class="preset-icon">🔵</span>
+      <span class="preset-name">Adjusted Timeout</span>
+      <span class="preset-desc">ACK delay 900 ms · Timeout 1400 ms</span>
+    </button>
+  </div>
+
+  <div class="exp-results-area">
+    <div class="comparison-table-wrap glass-panel">
+      <h3 class="panel-title">📊 Results Comparison</h3>
+      <table class="comparison-table" id="comparisonTable">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>ACK Delay</th>
+            <th>Timeout</th>
+            <th>Transmissions</th>
+            <th>Retransmissions</th>
+            <th>Duplicates</th>
+            <th>Completion</th>
+          </tr>
+        </thead>
+        <tbody id="compTableBody">
+          <tr class="empty-row"><td colspan="7">Run scenarios above to populate results.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Bar chart -->
+    <div class="chart-wrap glass-panel" id="chartWrap">
+      <h3 class="panel-title">📈 Retransmissions Comparison</h3>
+      <div class="bar-chart" id="barChart">
+        <div class="bar-group" id="barNormal">
+          <div class="bar-fill" style="height:0%" data-label="0"></div>
+          <span class="bar-label">Normal</span>
+        </div>
+        <div class="bar-group" id="barDelayed">
+          <div class="bar-fill bar-orange" style="height:0%" data-label="0"></div>
+          <span class="bar-label">Delayed</span>
+        </div>
+        <div class="bar-group" id="barAdjusted">
+          <div class="bar-fill bar-blue" style="height:0%" data-label="0"></div>
+          <span class="bar-label">Adjusted</span>
+        </div>
+      </div>
+      <p class="chart-caption">Height represents number of retransmissions. Run each scenario to update.</p>
+    </div>
+  </div>
+
+  <div class="exp-insight glass-panel">
+    <h3 class="panel-title">💡 Key Insight</h3>
+    <p>
+      Comparing Scenario B (Delayed ACK) with Scenario C (Adjusted Timeout) reveals the core lesson:
+      <strong>increasing the timeout prevents the unnecessary retransmission</strong> — but only because the ACK
+      still arrives before the longer timeout expires. A longer timeout is not a universal fix; when a frame
+      or ACK is <em>actually lost</em>, a longer timeout delays recovery. The correct solution is
+      to tune the timeout to match realistic round-trip times.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ THEORY ═══════════════════════════════ -->
+<section id="theory" class="section theory-section">
+  <div class="section-header">
+    <h2 class="section-title">Protocol Theory</h2>
+    <p class="section-subtitle">Understanding the mechanics behind Stop-and-Wait ARQ.</p>
+  </div>
+
+  <div class="theory-grid">
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">🔄</div>
+      <h3>ARQ — Automatic Repeat reQuest</h3>
+      <p>ARQ is an error-control method for data transmission that uses acknowledgements and timeouts to ensure reliable delivery. The sender waits for confirmation before moving on.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">⏸️</div>
+      <h3>Stop-and-Wait Operation</h3>
+      <p>The simplest ARQ protocol: send one frame, wait for its ACK, then send the next. At most one unacknowledged frame exists at any time, making it easy to reason about but potentially slow.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">✅</div>
+      <h3>Acknowledgements (ACKs)</h3>
+      <p>The receiver sends an ACK after accepting a data frame. In this model, ACK 0 acknowledges data frame 0 and ACK 1 acknowledges data frame 1. The sender must wait for the matching ACK before advancing.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">⏰</div>
+      <h3>Sender Timeout</h3>
+      <p>To handle lost or excessively delayed ACKs, the sender starts a timer when it transmits. If the timer expires before the ACK arrives, the sender retransmits.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">🔁</div>
+      <h3>Retransmission</h3>
+      <p>A retransmission resends the same frame with the same sequence number and payload. It is not a new frame — it is a second (or third…) copy of the same logical message.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">0️⃣1️⃣</div>
+      <h3>Alternating Sequence Numbers</h3>
+      <p>Only two sequence numbers are needed: 0 and 1. They alternate with each successfully delivered frame. This lets the receiver tell whether an arriving frame is new or a duplicate.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">🚫</div>
+      <h3>Duplicate Suppression</h3>
+      <p>When a retransmitted frame arrives, the receiver compares its sequence number against the expected value. If they match, it's a new frame. If not, it's a duplicate — acknowledged but not delivered.</p>
+    </div>
+    <div class="theory-card glass-panel">
+      <div class="theory-icon">📐</div>
+      <h3>ACK Arrival Time Formula</h3>
+      <div class="formula-box">
+        <code>ACK arrival = data travel + ACK delay + ACK travel</code>
+        <br/>
+        <code>Example: 100 + 900 + 100 = <strong>1,100 ms</strong></code>
+      </div>
+      <p>If this is greater than the sender timeout, a retransmission will occur.</p>
+    </div>
+  </div>
+
+  <div class="model-assumptions glass-panel">
+    <h3 class="panel-title">⚠️ Model Assumptions</h3>
+    <ul>
+      <li>Fixed propagation delays (no jitter or random variation).</li>
+      <li>No packet loss or corruption — only delay is modelled.</li>
+      <li>No frame serialisation time or processing overhead.</li>
+      <li>No packet reordering — frames arrive in transmission order.</li>
+      <li>The receiver generates a separate delayed ACK for each received copy of a frame.</li>
+      <li>Tie-breaking: when an ACK arrival and a timeout coincide at the same simulation time, the ACK is processed first, cancelling the timeout.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ EXAM Q&A ═══════════════════════════════ -->
+<section id="exam" class="section exam-section">
+  <div class="section-header">
+    <h2 class="section-title">Exam-Style Question &amp; Worked Answer</h2>
+    <p class="section-subtitle">A complete worked example based on the assignment scenario.</p>
+  </div>
+
+  <div class="exam-card glass-panel">
+    <div class="exam-question">
+      <h3>Question</h3>
+      <blockquote>
+        A sender uses Stop-and-Wait ARQ. Data travel time is <strong>100 ms</strong>, receiver ACK delay is
+        <strong>900 ms</strong>, ACK travel time is <strong>100 ms</strong>, and sender timeout is
+        <strong>600 ms</strong>. There is one unique data frame to deliver. No frames are lost or corrupted.
+        <br/><br/>
+        (a) When does retransmission occur?<br/>
+        (b) How does the receiver handle the retransmitted frame?<br/>
+        (c) When does the sender complete the transfer?<br/>
+        (d) How many duplicate frames arrive at the receiver?
+      </blockquote>
+    </div>
+
+    <div class="exam-answer">
+      <h3>Worked Answer</h3>
+
+      <div class="answer-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>Original frame transmission (t = 0 ms)</strong><br/>
+          The sender transmits DATA 0 (Message 1, sequence 0, attempt 1) and starts its timer set to 600 ms.
+        </div>
+      </div>
+      <div class="answer-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>Receiver accepts the frame (t = 100 ms)</strong><br/>
+          DATA 0 arrives at the receiver. Sequence 0 matches the expected value, so the payload is
+          delivered to the application. The expected sequence advances to 1. The receiver schedules
+          ACK 0 to be sent after a delay of 900 ms, i.e. at t = 1,000 ms.
+        </div>
+      </div>
+      <div class="answer-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>Sender timeout and retransmission (t = 600 ms)</strong><br/>
+          The sender timer expires. The ACK has not yet arrived (it will be sent at 1,000 ms and arrive at 1,100 ms).
+          The sender retransmits DATA 0 (attempt 2) and restarts its timer.
+        </div>
+      </div>
+      <div class="answer-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <strong>Receiver discards the duplicate (t = 700 ms)</strong><br/>
+          The retransmitted DATA 0 arrives. Sequence 0 does <em>not</em> match the now-expected sequence 1,
+          so it is identified as a duplicate. The payload is <em>not</em> delivered again.
+          A second ACK 0 is scheduled for t = 1,600 ms. The duplicate counter increments to 1.
+        </div>
+      </div>
+      <div class="answer-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <strong>Receiver sends the original ACK (t = 1,000 ms)</strong><br/>
+          The ACK 0 for the original frame is emitted and travels for 100 ms.
+        </div>
+      </div>
+      <div class="answer-step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <strong>Transfer complete (t = 1,100 ms)</strong><br/>
+          ACK 0 arrives at the sender. The sender cancels any outstanding timer and marks the transfer complete.
+          All messages have been acknowledged.
+        </div>
+      </div>
+      <div class="answer-step">
+        <div class="step-num">7</div>
+        <div class="step-content">
+          <strong>Extra ACK arrives (t = 1,700 ms)</strong><br/>
+          The ACK generated for the duplicate frame arrives. Since the transfer is already complete, the
+          sender ignores it (it is a stale ACK for a sequence number no longer being tracked).
+        </div>
+      </div>
+
+      <div class="answer-summary">
+        <h4>Summary Table</h4>
+        <table class="summary-table">
+          <tr><td>Retransmission at</td><td><strong>600 ms</strong></td></tr>
+          <tr><td>Duplicate frames received</td><td><strong>1</strong></td></tr>
+          <tr><td>Unique payloads delivered</td><td><strong>1</strong></td></tr>
+          <tr><td>Transfer complete at</td><td><strong>1,100 ms</strong></td></tr>
+          <tr><td>Total data transmissions</td><td><strong>2</strong></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="exam-cta">
+      <button class="btn btn-primary" onclick="loadExamScenario()">▶ Run This Example in Simulator</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ GUIDE ═══════════════════════════════ -->
+<section id="guide" class="section guide-section">
+  <div class="section-header">
+    <h2 class="section-title">Project Guide</h2>
+    <p class="section-subtitle">Installation, architecture, assumptions, and references.</p>
+  </div>
+
+  <div class="guide-grid">
+    <div class="guide-card glass-panel">
+      <h3>🚀 Quick Start</h3>
+      <div class="code-block">
+        <pre><code>cd stop-and-wait-arq
+pip install -r requirements.txt
+python app.py</code></pre>
+      </div>
+      <p>Then open <a href="http://localhost:5000" target="_blank">http://localhost:5000</a> in your browser.</p>
+    </div>
+
+    <div class="guide-card glass-panel">
+      <h3>🏗️ Architecture</h3>
+      <p>Python (Flask) calculates the complete ordered event trace. JavaScript plays back that trace using
+      simulation times, completely decoupled from the protocol logic.</p>
+      <ul>
+        <li><strong>simulator.py</strong> — event queue, sender, receiver, timers</li>
+        <li><strong>app.py</strong> — Flask routes and JSON API</li>
+        <li><strong>animation.js</strong> — visual playback of event trace</li>
+        <li><strong>app.js</strong> — controls, metrics, log rendering</li>
+      </ul>
+    </div>
+
+    <div class="guide-card glass-panel">
+      <h3>✅ Run Tests</h3>
+      <div class="code-block">
+        <pre><code>python tests/test_simulator.py</code></pre>
+      </div>
+      <p>Tests verify: normal delivery, delayed-ACK retransmission, adjusted timeout, duplicate suppression, and stale-timer safety.</p>
+    </div>
+
+    <div class="guide-card glass-panel">
+      <h3>📚 References</h3>
+      <ul>
+        <li>Forouzan, B.A. (2013). <em>Data Communications and Networking</em>, 5th ed. McGraw-Hill.</li>
+        <li>Tanenbaum, A.S. &amp; Wetherall, D. (2011). <em>Computer Networks</em>, 5th ed. Pearson.</li>
+        <li>RFC 793 — TCP, for comparison with sliding window.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-credit glass-panel">
+    <p>
+      <strong>Student:</strong> — &nbsp;|&nbsp;
+      <strong>Student ID:</strong> 25CS096 &nbsp;|&nbsp;
+      <strong>Course:</strong> Computer Networks &nbsp;|&nbsp;
+      <strong>Topic:</strong> Stop-and-Wait ARQ with Delayed ACK
+    </p>
+  </div>
+</section>
+
+<!-- Scripts -->
+<script src="/static/js/animation.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

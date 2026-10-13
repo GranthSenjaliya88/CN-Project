@@ -1,0 +1,191 @@
+/* src/index.css — NetVista ARQ global design system */
+
+/* ── Google Font ── */
+/* System font stack keeps the lab usable offline. */
+
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  background: #070d1a;
+  color: #f0f9ff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  border: none;
+}
+
+/* ── Typography ── */
+h1 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.02em; color: #f0f9ff; margin: 0; }
+h2 { font-size: clamp(1.3rem, 2.5vw, 2rem); font-weight: 700; color: #f0f9ff; margin: 0; }
+h3 { font-size: 1.1rem; font-weight: 700; color: #f0f9ff; margin: 0; }
+p  { color: #94a3b8; }
+a  { color: #22d3ee; text-decoration: none; }
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #22d3ee, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glassmorphism card ── */
+.glass {
+  background: rgba(13, 26, 46, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #0891b2, #22d3ee);
+  color: #000;
+  box-shadow: 0 0 20px rgba(34,211,238,0.25);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 30px rgba(34,211,238,0.45);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.06);
+  color: #94a3b8;
+  border: 1px solid rgba(56,189,248,0.12);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+  color: #f0f9ff;
+}
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+/* ── Form inputs ── */
+.input {
+  width: 100%;
+  background: rgba(7,13,26,0.8);
+  border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #f0f9ff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.input:focus {
+  border-color: rgba(34,211,238,0.5);
+  box-shadow: 0 0 0 2px rgba(34,211,238,0.1);
+}
+.input.error { border-color: rgba(248,113,113,0.6); }
+
+/* ── Panel heading ── */
+.panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ── Metric cards ── */
+.metric-card {
+  background: rgba(13,26,46,0.7);
+  border: 1px solid rgba(56,189,248,0.08);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.metric-val  { display: block; font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.metric-label{ display: block; font-size: 0.65rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+/* ── Animated slide-in ── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide { animation: slideIn 0.2s ease; }
+
+/* ── Pulse glow ── */
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ── Grid background ── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(34,211,238,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(7,13,26,0.5); }
+::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.35); }
+
+/* ── Focus visible ── */
+*:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; }
+
+/* ── Selection ── */
+::selection { background: rgba(34,211,238,0.2); color: #f0f9ff; }
+
+/* Audit enhancements: preserve the original palette and layout language. */
+.muted { color:#94a3b8; font-size:.78rem; }
+.eyebrow {color:#94a3b8;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;}
+.lab-status {display:flex;gap:18px;flex-wrap:wrap;padding:12px 0;color:#67e8f9;font-size:.66rem;letter-spacing:.12em;}
+.lab-status span::before {content:'•';margin-right:6px;color:#4ade80;}
+.lab-toolbar {display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 20px;font-size:.8rem;color:#cbd5e1;}
+.lab-toolbar label {display:flex;align-items:center;gap:8px;margin-right:auto;}
+.simulator-layout {display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start;}
+.scene-tools {position:absolute;right:12px;top:42px;display:flex;gap:6px;z-index:20;}
+.flat-scene {height:100%;display:flex;flex-direction:column;justify-content:center;padding:18px;}
+.flat-scene svg {width:100%;max-height:320px;}
+.scene-fallback {position:absolute;bottom:30px;left:20px;font-size:.8rem;}
+.model-notes,.sequence-panel {padding:18px;margin-top:12px;}
+.model-notes ul {padding-left:20px;font-size:.8rem;color:#94a3b8;}
+summary {cursor:pointer;color:#cbd5e1;}
+button,input,select {font:inherit;}
+button {color:inherit;}
+@media(max-width:900px){.simulator-layout{grid-template-columns:minmax(0,1fr)}.configuration-panel{width:100%!important;min-width:0!important}.btn{white-space:normal}.lab-toolbar{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print {nav,.configuration-panel,.lab-toolbar,.scene-tools,button,input[type=range],canvas{display:none!important}body,#root,main,main *{background:white!important;color:#111!important;box-shadow:none!important;text-shadow:none!important}main{padding:0!important}.simulator-layout{display:block}.glass{break-inside:avoid;border:1px solid #bbb!important}details{display:block}.gradient-text{-webkit-text-fill-color:#111!important}svg{max-height:600px}}
+
+@media(max-width:600px){.event-row{display:grid!important;grid-template-columns:60px 75px 24px;gap:4px!important}.event-row>span:last-child{grid-column:1/-1}.configuration-panel .btn-primary{font-size:.8rem;padding:10px}.scene-tools{top:48px}.model-notes{overflow-wrap:anywhere}}
+
+.packet-ledger{margin-top:16px;padding:20px}.ledger-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ledger-heading>div{margin-right:auto}.ledger-heading h2{font-size:1.2rem;margin:4px 0 8px}.ledger-heading select{background:#102339;color:#e2e8f0;padding:6px;border:1px solid #334155;border-radius:6px}.packet-summary{display:flex;gap:18px;flex-wrap:wrap;font-size:.8rem;padding:14px 0;color:#94a3b8}.packet-summary b{color:#67e8f9}.ledger-scroll{max-height:380px;overflow:auto}.packet-ledger table{border-collapse:collapse;width:100%;font-size:.75rem;white-space:nowrap}.packet-ledger th{position:sticky;top:0;background:#142438;text-align:left;color:#94a3b8;z-index:1}.packet-ledger td,.packet-ledger th{padding:12px 10px;border-bottom:1px solid #213149}.packet-ledger small{display:block;color:#fb923c}.packet-active{background:#123348}.scene-legend{position:absolute;bottom:10px;left:14px;right:14px;display:flex;gap:14px;flex-wrap:wrap;font-size:.68rem;pointer-events:none}.scene-legend span{background:#071222dd;padding:5px 8px;border-radius:5px}.flat-scene{background:radial-gradient(ellipse at center,#122d47,#070d1a)}

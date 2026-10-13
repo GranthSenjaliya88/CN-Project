@@ -1,0 +1,5 @@
+"Scenario","Frames","Data travel (ms)","ACK delay (ms)","ACK travel (ms)","Timeout (ms)","Transmissions","Retransmissions","Duplicates","Delivered","Completion (ms)"
+"delayed run","1","100","900","100","600","2","1","1","1","1100"
+"Normal Delivery","1","100","100","100","800","1","0","0","1","300"
+"Delayed ACK","1","100","900","100","600","2","1","1","1","1100"
+"Adjusted Timeout","1","100","900","100","1400","1","0","0","1","1100"
