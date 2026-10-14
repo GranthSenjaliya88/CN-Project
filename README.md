@@ -1,10 +1,42 @@
-# NetVista ARQ
+<div align="center">
 
-React 3D/2D visualisation backed by a Python discrete-event Stop-and-Wait ARQ simulator with delayed acknowledgments.
+# 🌐 NetVista ARQ
 
-The current application is in **netvista-arq/**. See [setup and documentation](netvista-arq/README.md). On Windows, install the backend requirements and run `START_LAB.cmd`, then open http://127.0.0.1:5000/simulator.
+### Send. Wait. Retry. Understand.
 
-**[Live demo](https://netvista-arq.onrender.com)** · **[Simulator](https://netvista-arq.onrender.com/simulator)** · **[Guide](https://netvista-arq.onrender.com/guide)**
+**An interactive 3D networking lab for Stop-and-Wait ARQ with delayed acknowledgments.**
+
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](netvista-arq/frontend/package.json)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](netvista-arq/backend)
+[![Three.js](https://img.shields.io/badge/Three.js-3D%20%2B%202D-111827?logo=threedotjs)](netvista-arq/frontend/src/components/NetworkScene.tsx)
+[![Render](https://img.shields.io/badge/Render-Open%20demo-46E3B7?logo=render&logoColor=white)](https://netvista-arq.onrender.com)
+
+**[🚀 Launch simulator](https://netvista-arq.onrender.com/simulator)** · **[📊 Experiments](https://netvista-arq.onrender.com/experiments)** · **[📖 Theory](https://netvista-arq.onrender.com/theory)** · **[🧭 Guide](https://netvista-arq.onrender.com/guide)**
+
+![Animated delayed-ACK protocol timeline](netvista-arq/docs/screenshots/delayed-ack.gif)
+
+*Illustrative animation of the reference experiment: one retry, one duplicate discarded, one payload delivered.*
+
+</div>
+
+## Why NetVista?
+
+A late acknowledgment does not mean the original frame was lost. NetVista makes that distinction visible: change the timeout, watch the retry, then inspect how sequence numbers keep the application from receiving the same payload twice.
+
+The website runs an actual Python simulation. Every animation, counter and event time follows the calculated trace.
+
+> **Try it online:** [netvista-arq.onrender.com](https://netvista-arq.onrender.com) — no installation required. The free Render instance may take time to wake after inactivity.
+
+## Inside the lab
+
+![3D workstation view](netvista-arq/docs/screenshots/upgraded-home-3d.png)
+
+| Explore | Observe | Explain |
+| --- | --- | --- |
+| Rotate, zoom and follow packets | DATA and ACK journeys | One outstanding message at a time |
+| Change ACK delay and timeout | Retransmissions and timer resets | Why a delayed ACK causes a retry |
+| Pause and step through events | Duplicate detection and delivery counts | Why the payload is delivered only once |
+| Compare experiments and export results | Exact send and arrival times | How timeout selection changes results |
 
 ## Features
 
@@ -17,13 +49,71 @@ The current application is in **netvista-arq/**. See [setup and documentation](n
 
 ## Architecture
 
-```text
-React configuration → Flask API → validation → Python event queue
-                                            ↓
-3D/2D scene ← playback clock ← JSON trace and final metrics
+```mermaid
+flowchart TB
+    subgraph UI[React + TypeScript frontend]
+      Controls[SimulationControls: user inputs and presets]
+      Page[SimulatorPage: orchestration and playback clock]
+      Client[services/api.ts: request and response validation]
+      State[simulation/playback.ts: derive state at current time]
+      Packets[simulation/packets.ts: packet journeys]
+      Scene[SceneViewport: 3D / 2D selection]
+      Three[NetworkScene + ComputerTower: Three.js geometry]
+      Panels[StateCards / DeliveredTray / MetricsPanel]
+      Evidence[EventLog / PacketLedger / SequenceDiagram]
+      Export[services/exports.ts: CSV and JSON]
+      Saved[services/runs.ts: browser storage]
+      Compare[ExperimentsPage: comparisons]
+    end
+    subgraph API[Python backend]
+      Flask[app.py: Flask routes]
+      Validate[validation.py: input constraints]
+      Engine[engine.py: priority queue and timer tokens]
+      Models[models.py: configurations, events and results]
+      Trace[JSON trace + animation hints + final metrics]
+    end
+    Controls --> Page --> Client
+    Client -->|POST /api/simulate| Flask
+    Flask --> Validate --> Engine
+    Models --- Engine
+    Engine --> Trace --> Page
+    Page --> State --> Scene --> Three
+    State --> Panels
+    Page --> Packets --> Evidence
+    Page --> Evidence --> Export
+    Page --> Saved --> Compare
+    classDef cyan fill:#123347,stroke:#22d3ee,color:#e0faff
+    classDef green fill:#15372c,stroke:#4ade80,color:#ecfdf5
+    class Controls,Page,State,Scene,Three cyan
+    class Flask,Validate,Engine,Trace green
 ```
 
 Python calculates the complete event trace before playback. React derives visible states and counters from simulation time. Playback speed changes presentation speed, not protocol timings.
+
+### Event engine → playback → evidence
+
+1. **Validate:** the API checks frame count and timing bounds before constructing a simulation configuration.
+2. **Schedule:** the engine queues DATA arrivals, ACK sends, ACK arrivals and timeout events by simulation time.
+3. **Recover:** a timeout retries the current frame with the same sequence bit. Timer tokens prevent canceled timers from affecting newer transmissions.
+4. **Deliver once:** the receiver accepts the expected sequence bit, toggles its expectation and rejects duplicate payloads while acknowledging them again.
+5. **Replay:** the frontend derives sender state, receiver state and in-flight packets from the shared clock. Seeking backward reconstructs the earlier state.
+6. **Inspect:** live counters track playback; final results remain separately labeled. Packet tables, logs and exports provide evidence for each run.
+
+### Deployment architecture
+
+```mermaid
+flowchart LR
+    Git[GitHub source] --> Build[Docker build: Node 22 + npm ci + Vite]
+    Build --> Dist[React production assets]
+    Dist --> Server[Python 3.12 + Gunicorn + Flask]
+    Browser[Browser] -->|HTTPS on Render| Server
+    Server -->|Page routes and static assets| Browser
+    Server -->|Same-origin /api requests| Engine[Python simulation engine]
+    Engine -->|JSON results| Browser
+    Health[Render health check] -->|GET /api/health| Server
+```
+
+One web service serves the interface and API. No database or external simulation service is required. Saved comparisons live in the browser; simulation traces are calculated per request.
 
 | Layer | Stack |
 | --- | --- |
@@ -32,7 +122,10 @@ Python calculates the complete event trace before playback. React derives visibl
 | Backend | Python 3.12, Flask |
 | Deployment | Docker, Gunicorn, Render |
 
-## Local setup
+<details>
+<summary><strong>🛠 Developer setup — expand for commands</strong></summary>
+
+## Development setup
 
 ```bash
 git clone https://github.com/GranthSenjaliya88/CN-Project.git
@@ -41,7 +134,7 @@ python -m pip install -r backend/requirements.txt
 python backend/app.py
 ```
 
-Open http://127.0.0.1:5000. The committed frontend build runs without Node.js.
+The local backend listens on port 5000 and serves the committed frontend build without Node.js. For the hosted website, use the [Render demo](https://netvista-arq.onrender.com).
 
 For frontend development, use Node.js 24+ and a second terminal:
 
@@ -52,6 +145,8 @@ npm run dev
 ```
 
 Vite runs on port 3000 and proxies `/api` to Flask on port 5000. Run `npm run build` after frontend edits to refresh the version Flask serves.
+
+</details>
 
 ## Reference experiments
 
@@ -84,7 +179,11 @@ netvista-arq/
   backend/app.py       # API and frontend serving
   backend/simulator/  # Engine, models and validation
   backend/tests/
-  frontend/src/       # Pages, scenes, playback and API client
+  frontend/src/pages/ # Home, simulator, experiments, theory and guide
+  frontend/src/components/ # Scenes, controls, dashboards and tables
+  frontend/src/simulation/ # Playback state and packet journeys
+  frontend/src/services/   # API, config, saved runs and exports
+  frontend/src/types/      # Shared TypeScript simulation contracts
   frontend/tests/
   frontend/dist/      # Production build
   docs/               # Technical and presentation material
