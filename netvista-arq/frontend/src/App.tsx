@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 // src/App.tsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppNavigation } from './components/AppNavigation';
-const ProtocolLabPage = lazy(() => import('./pages/ProtocolLabPage'));
 const HomePage = lazy(() => import('./pages/HomePage'));
 const SimulatorPage = lazy(() => import('./pages/SimulatorPage'));
 const ExperimentsPage = lazy(() => import('./pages/ExperimentsPage'));
@@ -24,7 +23,7 @@ export default function App() {
         <div style={{ flex: 1 }}>
           <Suspense fallback={<main style={{padding:100}}>Loading the networking lab…</main>}><Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/protocol-lab" element={<ProtocolLabPage />} />
+            <Route path="/protocol-lab" element={<Navigate to="/simulator" replace />} />
             <Route path="/simulator" element={<SimulatorPage />} />
             <Route path="/experiments" element={<ExperimentsPage />} />
             <Route path="/theory" element={<TheoryPage />} />

@@ -132,7 +132,7 @@ server: {
           <div className="glass" style={{ padding: 24 }}>
             <h3 style={{ fontWeight: 700, marginBottom: 16 }}>⚠️ Known Limitations</h3>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.84rem', color: '#94a3b8' }}>
-              <li>• Assigned simulator: delayed ACKs without loss. Protocol Lab: controlled one-shot DATA/ACK loss; no corruption.</li>
+              <li>• Stop-and-Wait with delayed ACKs only; no packet loss, corruption or reordering.</li>
               <li>• No reordering or jitter beyond fixed delays.</li>
               <li>• Maximum 20 frames and hard event cap of 5000 steps.</li>
               <li>• 3D scene uses WebGL — needs a GPU. Falls back gracefully.</li>

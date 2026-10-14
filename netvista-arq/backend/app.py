@@ -75,15 +75,6 @@ def scenarios():
     })
 
 
-@app.route('/api/protocol-lab', methods=['POST'])
-def protocol_lab():
-    from simulator.protocol_lab import run_lab
-    try:
-        return jsonify(run_lab(request.get_json(silent=True)))
-    except ValueError as exc:
-        return jsonify(error=str(exc)), 422
-
-
 DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 @app.route("/")

@@ -72,7 +72,6 @@ export default function HomePage() {
           </div>
 
           <LiveHero />
-          <div className="home-lab-cta"><span>Explore beyond the assignment</span><h2>One channel. Three recovery strategies.</h2><p>Compare Stop-and-Wait, Go-Back-N and Selective Repeat with controlled DATA and ACK loss.</p><button className="btn btn-primary" onClick={()=>navigate('/protocol-lab')}>Enter the Protocol Lab →</button></div>
         </div>
       </section>
 

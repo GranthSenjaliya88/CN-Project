@@ -78,4 +78,4 @@ Review and personalise the drafts. Record your own narration and acknowledge AI 
 
 
 ## Interactive protocol lab
-The new `/protocol-lab` adds executable Stop-and-Wait, Go-Back-N and Selective Repeat, controlled DATA/ACK loss, sliding-window dashboards and exports. See [model and verification](docs/protocol-lab.md). The original assignment remains under `/simulator`.
+The website implements only the assigned Stop-and-Wait ARQ with delayed ACK under `/simulator`. It retains the detailed 3D computers, interactive camera, 2D view, Python event logic, three required experiments and evidence exports. The old `/protocol-lab` URL redirects to `/simulator`.
