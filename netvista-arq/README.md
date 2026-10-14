@@ -54,7 +54,7 @@ npm run build
 ## Model
 A deterministic Python event heap produces the entire trace before animation. React uses a shared playback clock to derive visible state. One new message is outstanding at a time, although multiple retransmitted copies or ACKs can be in flight. ACK n acknowledges DATA n. Receiver duplicate decisions use the alternating sequence bit, not a hidden message identifier.
 
-Fixed positive data/ACK travel times, nonnegative receiver ACK delay, no loss/corruption/reordering, no separate serialization or processing time. Every received data copy schedules an ACK. ACK arrival wins ties with timeout. Stale timer tokens are ignored. Settings accept up to 20 messages, 30000 ms travel/ACK delay, and 60000 ms timeout. A 5000 internal-event cap returns a helpful error instead of an unbounded trace. Zero travel time is intentionally rejected; zero receiver ACK delay is supported.
+Fixed positive data/ACK travel times, nonnegative receiver ACK delay, no loss/corruption/reordering, no separate serialization or processing time. Every received data copy schedules an ACK. ACK arrival wins ties with timeout. Stale timer tokens are ignored. Settings accept up to 20 messages and 3,600,000 ms for each timing input. A 5000 internal-event cap returns a helpful error instead of an unbounded trace. Zero travel time is intentionally rejected; zero receiver ACK delay is supported.
 
 Transfer completion is when the final required ACK is accepted. All-events finish can be later due to duplicate-triggered ACKs. Final results are labelled separately from live playback counters.
 

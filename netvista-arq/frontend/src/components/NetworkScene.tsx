@@ -11,6 +11,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 // HTML labels stay sharp and need no remote font download.
 function Text({children,position,fontSize=0.2,color}: {children:ReactNode;position:[number,number,number];fontSize?:number;color?:string;anchorX?:string;anchorY?:string;outlineColor?:string;outlineWidth?:number}) {
+ const {size}=useThree();
+ if(size.width<500 && fontSize<.2)return null;
  return <Html position={position} center style={{pointerEvents:'none',whiteSpace:'nowrap',fontSize:Math.max(10,fontSize*55),fontWeight:600,color,background:'rgba(7,13,26,.75)',padding:'2px 5px',borderRadius:4}}>{children}</Html>;
 }
 import type { InFlightPacket, LiveSenderState, LiveReceiverState } from '../types/simulation';
@@ -18,7 +20,7 @@ import type { InFlightPacket, LiveSenderState, LiveReceiverState } from '../type
 // Detailed local geometry: no external models or texture downloads.
 function Workstation({x,label,state,detail,color}:{x:number;label:string;state:string;detail:string;color:string}) {
  return <group position={[x,0,0]}>
-  <ComputerTower color={color} side={x<0?-1:1}/><RoundedBox args={[4.0,.16,2.3]} radius={.08} position={[0,-.91,.15]} receiveShadow><meshStandardMaterial color="#34465c" roughness={.45} metalness={.35}/></RoundedBox>
+  <ComputerTower color={color} side={x<0?-1:1}/><RoundedBox args={[4.0,.16,2.3]} radius={.08} position={[0,-.91,.15]} receiveShadow><meshStandardMaterial color="#202c39" roughness={.24} metalness={.65}/></RoundedBox>
   {[-.95,.95].map(dx=><mesh key={dx} position={[dx,-1.1,.15]}><boxGeometry args={[.12,.4,1.3]}/><meshStandardMaterial color="#182638"/></mesh>)}
   <RoundedBox args={[1.95,1.25,.16]} radius={.055} position={[0,.18,-.15]} castShadow><meshStandardMaterial color="#596a7f" metalness={.55} roughness={.32}/></RoundedBox>
   <mesh position={[0,.18,-.059]}><planeGeometry args={[1.78,1.06]}/><meshStandardMaterial color="#071d2d" emissive="#123c57" emissiveIntensity={.7} roughness={.25}/></mesh>
@@ -31,6 +33,7 @@ function Workstation({x,label,state,detail,color}:{x:number;label:string;state:s
   <mesh position={[.58,.26,-.045]}><ringGeometry args={[.15,.18,32]}/><meshBasicMaterial color={color}/></mesh>
   <RoundedBox args={[1.4,.075,.48]} radius={.025} position={[-.1,-.79,.63]} castShadow><meshStandardMaterial color="#708094" metalness={.25} roughness={.5}/></RoundedBox>
   {Array.from({length:36},(_,i)=><mesh key={i} position={[-.69+(i%12)*.107,-.742,.49+Math.floor(i/12)*.11]}><boxGeometry args={[.078,.02,.075]}/><meshStandardMaterial color="#192b3f"/></mesh>)}
+  <mesh position={[.96,-.705,.64]}><boxGeometry args={[.018,.02,.10]}/><meshBasicMaterial color={color}/></mesh>
   <mesh position={[.96,-.77,.64]} scale={[1,.5,1.6]}><sphereGeometry args={[.12,20,12]}/><meshStandardMaterial color="#92a3b7" roughness={.38}/></mesh>
   <Line points={[[.96,-.8,.45],[1.08,-.8,.15],[.75,-.8,-.4],[0,-.8,-.4],[0,-.4,-.24]]} color="#172537" lineWidth={2}/>
   <Text position={[0,1.27,0]} fontSize={.25} color={color}>{label}</Text>
@@ -79,7 +82,7 @@ function PacketMesh({
   return (
     <group position={[x, y, laneZ]}>
       <Line points={[[-.20,.10,.07],[0,-.015,.07],[.20,.10,.07]]} color="#effaff" lineWidth={2}/>
-      {[1,2,3,4].map(i=><mesh key={i} position={[(packet.direction==='data'?-1:1)*i*.18,0,0]}><sphereGeometry args={[.035,8,8]}/><meshBasicMaterial color={color} transparent opacity={.5-i*.09}/></mesh>)}
+      {[1,2,3,4,5,6,7,8].map(i=><mesh key={i} position={[(packet.direction==='data'?-1:1)*i*.12,0,0]} scale={[2,1,1]}><sphereGeometry args={[.055*(1-i/10),8,8]}/><meshBasicMaterial color={color} toneMapped={false} transparent opacity={.65-i*.07}/></mesh>)}
       <mesh ref={meshRef} rotation={[0, 0, 0]} castShadow>
         <boxGeometry args={[0.48, 0.26, 0.12]} />
         <meshStandardMaterial
@@ -169,10 +172,10 @@ export function NetworkScene({
       >
         <Environment resolution={128}><Lightformer form="rect" intensity={3} position={[0,6,2]} rotation={[Math.PI/2,0,0]} scale={[15,8,1]}/><Lightformer form="rect" intensity={2} color="#38bdf8" position={[-8,2,0]} rotation={[0,Math.PI/2,0]} scale={[6,5,1]}/></Environment>
         {/* Lighting */}
-        <ambientLight intensity={0.85} />
+        <ambientLight intensity={0.45} />
         <hemisphereLight args={["#dbeafe", "#24344b", 1.5]}/><directionalLight position={[2, 8, 6]} intensity={2.5} castShadow shadow-mapSize={[1024,1024]} shadow-camera-left={-8} shadow-camera-right={8} shadow-camera-top={5} shadow-camera-bottom={-5}/>
-        <pointLight position={[-6, 4, 4]} color="#22d3ee" intensity={0.8} />
-        <pointLight position={[6, 4, 4]} color="#4ade80" intensity={0.8} />
+        <pointLight position={[-6, 2, 2]} color="#22d3ee" intensity={8} />
+        <pointLight position={[6, 2, 2]} color="#4ade80" intensity={8} />
 
         {/* Grid floor */}
         <Grid
@@ -191,7 +194,7 @@ export function NetworkScene({
 
         {/* Environment fog */}
         <mesh rotation={[-Math.PI/2,0,0]} position={[0,-1.34,0]} receiveShadow><planeGeometry args={[60,60]}/><MeshReflectorMaterial resolution={256} mirror={.3} mixStrength={.45} color="#111f32" metalness={.4} roughness={.45}/></mesh>
-        <fog attach="fog" args={['#070d1a', 12, 30]} />
+        <fog attach="fog" args={['#070d1a', 35, 80]} />
 
         {/* Protocol objects */}
         <SenderMesh state={sender} />
@@ -219,7 +222,7 @@ function CameraControls({reset,mode,packet,time}:{reset:number;mode:string;packe
  const {camera,size,invalidate}=useThree();
  useEffect(()=>{
   const distance=Math.max(8,16/Math.max(size.width/size.height,0.55));
-  camera.position.set(mode==='overview'?4:0,mode==='overview'?7:3.6,distance+2);camera.lookAt(0,0,0);camera.updateProjectionMatrix();
+  camera.position.set(mode==='overview'?4:2.6,mode==='overview'?7:4.2,distance+2);camera.lookAt(0,0,0);camera.updateProjectionMatrix();
   ref.current?.target.set(0,0,0);ref.current?.update();invalidate();
  },[reset,mode,camera,size.width,size.height,invalidate]);
  useEffect(()=>{
